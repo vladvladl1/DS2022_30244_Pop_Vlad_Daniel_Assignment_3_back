@@ -1,11 +1,8 @@
-import {Document} from "mongoose";
-
-
-export interface IUser extends Document{
+export class UserDTO {
     name: string;
     username: string;
     status: string;
     role: string;
     password: string;
-
+    token:string;
 }

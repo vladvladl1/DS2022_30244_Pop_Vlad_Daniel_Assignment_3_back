@@ -14,9 +14,11 @@ const jwt  = require("jsonwebtoken");
 export const logout = async (req, res) => {
 
     try {
+        //console.log(JSON.stringify(req.headers));
+        const user =  await userService.findByUsername(req.username);
         const sess = await sessionService.findByUsername(req.username);
         const something = await sessionService.deleteByUsername(sess.username);
-        res.sendStatus(200);
+        res.status(220).send(user);
     }catch(err){
         console.log(err);
     }
@@ -24,7 +26,7 @@ export const logout = async (req, res) => {
 
 export const login = async (req, res) => {
     try {
-        const user = await userService.findByEmail(req.body.email);
+        const user = await userService.findByUsername(req.body.username);
         if(user.status === "suspended"){
             return res.status(220).send({error:"user suspended"});
         }
@@ -43,7 +45,7 @@ export const login = async (req, res) => {
         bcrypt.compare(req.body.password, user.password, async (err, resp) => {
             console.log(user.password);
             console.log(user.username);
-            console.log(user.email);
+
             if (err) {
                 res.status(220).send({error: "wrong passsword"});
             }
@@ -67,15 +69,15 @@ export const login = async (req, res) => {
 export const register = async (req: Request<unknown, unknown, IUser>, res) => {
 
     const {body} = req;
-    body.date = new Date();
+
     console.log(body);
-    console.log(body.email);
+
     try{
-        if( body.email===undefined || body.username===undefined || body.password===undefined ){
+        if( body.username===undefined || body.password===undefined ){
             res.status(220).send({error: "wrong data"});
         }
         const thepass = body.password;
-        const om =  await userService.findByEmail(body.email); // await findByEmail(body.email)
+        const om =  await userService.findByUsername(body.username); // await findByEmail(body.email)
         if(om){
             return res.status(220).send({error: "user already registered"});
         }
@@ -88,8 +90,8 @@ export const register = async (req: Request<unknown, unknown, IUser>, res) => {
             const pass = await bcrypt.hash(thepass, enc);
             body.password = pass;
             const user = await userService.createObject(body);
-            const created = await userService.findByEmail(body.email);
-            const token = jwt.sign({ username : body.username, _id:created._id}, process.env.jwtsecret);
+            const created = await userService.findByUsername(body.username);
+            const token = jwt.sign({ username : body.username}, process.env.jwtsecret);
             const sess = <ISession>{username: user.username, token: token};
             const session = await sessionService.createObject(sess);
             return res.status(200).send({user, token});

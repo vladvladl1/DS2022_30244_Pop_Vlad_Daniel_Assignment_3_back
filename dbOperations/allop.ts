@@ -1,5 +1,4 @@
 import mongoose, {Schema} from "mongoose";
-import rideModel from "../dataBase/ridedb";
 
 
 export type Position = {type:string, coordinates:[number]};

@@ -8,10 +8,11 @@ require("dotenv").config({path:"../.env"});
 const userService = new UserOp();
 const sessionService = new SessionOp();
 
-export const verificaToken = async (req: Request & {username:string, _id:string}, res: Response, next: NextFunction) => {
+export const verificaToken = async (req: Request & {username:string}, res: Response, next: NextFunction) => {
 
     if (req.headers === undefined || req.headers.authorization === undefined) {
         console.log("0");
+
         return res.sendStatus(401);
     }
     console.log("header" +req.headers);
@@ -30,23 +31,23 @@ export const verificaToken = async (req: Request & {username:string, _id:string}
     }
     if (legit == false) {
         console.log("2");
-        return res.sendStatus(401);
+        return res.sendStatus(402);
     }
 
 
     const decoded = jwt.decode(JSON.parse(token));
     console.log(decoded);
     console.log(decoded.username);
-    console.log("the magic id:" +decoded._id);
+
     if (decoded === undefined || decoded.username === undefined) {
         console.log("3");
-        return res.sendStatus(401);
+        return res.sendStatus(403);
     }
     try{
         const user = await userService.findByUsername(decoded.username);
         if(user.status === "suspended"){
             req.headers.authorization = undefined;
-            res.status(401).send({error: "user suspended"});
+            res.status(404).send({error: "user suspended"});
         }
 
     }catch(err){
@@ -54,7 +55,6 @@ export const verificaToken = async (req: Request & {username:string, _id:string}
     }
 
     req.username = decoded.username;
-    req._id = decoded._id;
     console.log(req.username);
     //res.status(200).send(decoded.username);
     return next();

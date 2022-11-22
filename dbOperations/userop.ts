@@ -12,15 +12,14 @@ export class UserOp extends Allop<IUser> {
     updateUserStatus(username:string, status:string){
         return userModel.updateOne({"username": username}, {$set: {"status":status}});
     }
-    updateEmail(username: string, email: string){
-        return userModel.updateOne({"username": username}, {$set: {"email": email}});
+    updateUserByUsername(username:string, name:string, status:string, role:string){
+        return userModel.updateOne({"username":username}, {$set: {"name":name,"status":status,"role":role }});
     }
+
     updateUsername(username: string, newUsername: string){
         return userModel.updateOne({"username":username}, {$set: {"username": newUsername}});
     }
-    updateDlByUsername(username: string, drivingLicence:string){
-        return userModel.updateOne({"username": username}, {$set: {"drivingLicense":drivingLicence}});
-    }
+
     updatePasswordByUsername (username: string, password: string){
         return userModel.updateOne({"username": username}, {$set: {"password": password}});
     }
@@ -35,6 +34,9 @@ export class UserOp extends Allop<IUser> {
     }
     findAllByUsername(username: string){
         return userModel.find({"username": username});
+    }
+    deleteByUsername(username: string) {
+        return userModel.deleteOne({"username":username});
     }
 }
 

@@ -3,13 +3,12 @@ import {Schema, Document} from "mongoose";
 import {IUser} from "../models/userInterface";
 
 const userSchema = new Schema({
-    email: {type: String},
+    name: {type: String},
     username: {type: String},
+    status: {type: String},
+    role: {type: String},
     password: {type: String},
-    drivingLicense: {type: String, default: ''},
-    profilePicture: {type: String, default: ''},
-    date: {type: Date},
-    status: {type: String, default: 'active'}
+
 });
 
 const userModel = mongoose.model<IUser>("user", userSchema);

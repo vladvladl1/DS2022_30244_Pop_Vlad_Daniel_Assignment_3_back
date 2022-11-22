@@ -15,4 +15,7 @@ export class SessionOp extends Allop<ISession> {
     updateUsername(username: string, newUsername: string){
         return userModel.updateOne({"username":username}, {$set: {"username": newUsername}});
     }
+    deleteByUsername(username: string) {
+        return sessionModel.deleteOne({"username":username});
+    }
 }

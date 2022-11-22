@@ -1,5 +1,5 @@
 import {UserOp} from "../dbOperations/userop";
-import {ResourceService} from "../Complementary/s3drivingLicense";
+
 import {SessionOp} from "../dbOperations/sessionop";
 import {ISession} from "../models/sessionInterface";
 
@@ -12,7 +12,7 @@ export const getMe = async(req, res ) => {
     const username = req.username;
     console.log(req.username);
     try{
-        const person= await userService.findById(req._id);
+        const person= await userService.findByUsername(req.username);
         if(person!==undefined){
             res.status(200).send(person);
         }else{
@@ -41,7 +41,7 @@ export const changePassword = async (req, res) => {
     }
     try{
 
-        const person = await userService.findById(req._id);
+        const person = await userService.findByUsername(req.username);
         if( username===undefined || oldPass===undefined || newPass===undefined){
             res.status(220).send({error: "wrong data"});
         }else {
@@ -75,67 +75,95 @@ export const changePassword = async (req, res) => {
         console.log(err);
     }
 }
-
-export const getdl = async (req, res) => {
-    const person = await userService.findById(req._id);
-    const path = person.drivingLicense;
-    const s3 = new ResourceService();
-    const url =  s3.getFileUrl(path);
-
-    if(url!==undefined){
-        res.status(200).send(url);
-    }else{
+export const adminGetUser = async (req, res) => {
+    const userAdmin = req.username;
+    const username = req.params.username;
+    console.log(req.username);
+    try{
+        const person= await userService.findByUsername(req.username);
+        const admin= await userService.findByUsername(userAdmin);
+        if(person!==undefined){
+            if(admin.role === "admin") {
+                res.status(200).send(person);
+            }else{
+                res.sendStatus(220);
+            }
+        }else{
+            res.sendStatus(220);
+        }
+    }catch(err){
+        console.log(err);
         res.sendStatus(220);
     }
 }
 
-export const savedl =  async (req, res) => {
-    const username = req.username;
-
-    const fil:Express.Multer.File = req.file;
-    const s3 = new ResourceService();
-    console.log(fil);
-    console.log("iar asta e body:");
-    console.log(username);
+export const adminGetAllUsers = async (req, res) => {
+    const userAdmin = req.username;
+    console.log("aici");
+    console.log(req.username);
     try{
-
-        if(fil === undefined) {
-            console.log("fil ii nul");
-            res.status(220).send(fil);
+        const person= await userService.findByUsername(userAdmin);
+        if(person!==undefined){
+            if(person.role === "admin") {
+                const users = await userService.findAll();
+                res.status(200).send(users);
+            }else{
+                res.sendStatus(220);
+            }
         }else{
-            const puts3 = await s3.uploadFile(fil, username);
-
-            const person = await userService.updateDlByUsername(username, puts3.path);
-
-            //console.log(puts3.path);
-            res.status(200).json(puts3);
+            res.sendStatus(220);
         }
-
-
-
     }catch(err){
+        console.log(err);
+        res.sendStatus(220);
+    }
+}
+
+export const unsuspendUser = async (req, res) => {
+    const username = req.params.username;
+    const userAdmin = req.username;
+    try{
+        const user = await userService.findByUsername(username);
+        if(user!==null) {
+            if(userAdmin.role === "admin") {
+                await userService.updateUserStatus(username, "active");
+                res.sendStatus(200);
+            }else{
+                res.status(220).send({error:"you have no privilege for such an action"});
+            }
+        }else{
+            res.status(400).send({error:"no user found"});
+        }
+    }catch(err){
+        res.sendStatus(400);
         console.log(err);
     }
 }
 
-export const modifyEmail = async(req, res) => {
-    const email = req.body.email;
-    const username = req.username;
-    try {
-
-        const newEmailUser = await userService.findByEmail(email);
-        if (newEmailUser !== null) {
-            res.status(400).send({error: "email already registered"});
-        } else {
-            const user = await userService.updateEmail(username, email);
-            res.status(200).send(user);
+export const suspendUser = async (req, res) => {
+    const username = req.params.username;
+    const userAdmin = req.username;
+    try{
+        const user = await userService.findByUsername(username);
+        if(user!==null) {
+        if(userAdmin.role === "admin") {
+            await userService.updateUserStatus(username, "suspended");
+            const sess = await sessionService.findByUsername(username);
+            const something = await sessionService.deleteByUsername(sess.username);
+            res.sendStatus(200);
+        }else{
+            res.status(220).send({error:"you have no privilege for such an action"});
         }
-
+        }else{
+            res.status(401).send({error:"no user found"});
+        }
     }catch(err){
+        res.sendStatus(401);
         console.log(err);
-        res.status(400).send({error: "username wrong"});
     }
 }
+
+
 
 export const modifyUsername = async(req, res) =>{
     const username = req.username;
@@ -163,27 +191,64 @@ export const modifyUsername = async(req, res) =>{
     }
 }
 
-export const modifyBoth = async( req, res) => {
-    const username = req.username;
-    const id = req._id;
-    const newUsername = req.body.username;
-    const email = req.body.email;
+export const deleteUser = async(req , res) => {
+    const userAdmin = req.useraname;
+    const username = req.params.username;
+
     try{
-        const existingUser = await userService.findById(id);
-
-
-        if(existingUser===null){
-            res.status(400).send({error:"wrong username"});
+        if(userAdmin.role === "admin") {
+            const deleted = await userService.deleteByUsername(username);
+            res.sendStatus(200);
         }else{
-            const actual = existingUser.username;
-            await sessionService.updateUsername(actual, newUsername);
-            await userService.updateBoth(actual, newUsername, email);
+            res.status(220).send({error:"you have no privilege for such an action"});
+        }
+    }catch (err){
+        console.log(err);
+        res.sendStatus(220);
+    }
+}
 
-                res.status(200).send({error:"username modified"});
+export const deleteByUsername = async (req, res) => {
 
+    try{
+        const person= await userService.findByUsername(req.username);
+
+        if(person!==undefined){
+            if(person.role === "admin") {
+
+                await userService.deleteByUsername(req.params.username);
+                await sessionService.deleteByUsername(req.params.username);
+
+                res.status(200).send(person);
+            }
+        }else{
+            res.sendStatus(220);
         }
     }catch(err){
         console.log(err);
-        res.status(400).send({error:"username wrong"});
+        res.sendStatus(220);
+    }
+}
+
+export const editUser = async (req, res) => {
+    const newUser = req.body;
+    try{
+        const person= await userService.findByUsername(req.username);
+
+        if(person!==undefined){
+            if(person.role === "admin") {
+
+                const newPerson = await userService.updateUserByUsername(newUser.username,newUser.name,newUser.status,newUser.role)
+                const pers = await userService.findByUsername(newUser.username);
+                res.status(200).send(pers);
+            }else{
+                res.sendStatus(220);
+            }
+        }else{
+            res.sendStatus(220);
+        }
+    }catch(err){
+        console.log(err);
+        res.sendStatus(220);
     }
 }
