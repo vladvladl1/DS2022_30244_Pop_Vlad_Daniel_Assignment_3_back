@@ -4,7 +4,9 @@ import {IEnergy} from "../models/energyInterface";
 
 
 const energySchema = new Schema({
-
+    timestamp: {type: String},
+    deviceId: {type: String},
+    measurementValue: {type: String}
 });
 
 const energyModel = mongoose.model<IEnergy>("energy", energySchema);

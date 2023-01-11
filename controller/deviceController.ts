@@ -70,6 +70,22 @@ export const getAllDevicesByUsername = async (req, res) => {
     }
 }
 
+export const getDeviceById = async (req, res) => {
+
+    try{
+
+
+            const device = await deviceService.findById(req.username);
+            res.status(200).send(device);
+
+
+
+    }catch(err){
+        console.log(err);
+        res.sendStatus(220);
+    }
+}
+
 export const getAllByParam = async (req, res) => {
         const username = req.body.username;
         console.log("din param" + username);

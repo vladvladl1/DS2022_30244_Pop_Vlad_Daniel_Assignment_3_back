@@ -11,4 +11,7 @@ export class EnergyOp extends Allop<IEnergy> {
     //findByEmail(email:string){
     //   return energyModel.findOne({"email": email}, {_id:0});
    // }
+    findMax(){
+        return energyModel.findOne().sort({measurementValue:-1});
+    }
 }
