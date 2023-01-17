@@ -9,6 +9,7 @@ import {IEnergy} from "./models/energyInterface";
 const WebSocket1 = require('ws');
 const wws = new WebSocket1.Server({port:8081})
 
+const socketIO = require('socket.io');
 
 require("dotenv").config({path:"./.env"});
 var WebSocketServer = require('websocket').server;
@@ -37,6 +38,28 @@ var server1 = http.createServer(function(request, response) {
 });
 server1.listen(8079, function() {
     console.log((new Date()) + ' Server is listening on port 8079');
+});
+
+var server2 = http.createServer(function(request, response) {
+    console.log((new Date()) + ' Received request for ' + request.url);
+    response.writeHead(404);
+    response.end();
+});
+server2.listen(3000, function() {
+    console.log((new Date()) + ' Server is listening on port 3000');
+});
+
+var io = socketIO(server2);
+
+io.on('connection', (socket) => {
+   socket.on('join', (data)=>{
+      socket.join(data.room);
+      socket.broadcast.to(data.room).emit('user joined');
+   });
+   socket.on('message', (data) =>{
+       console.log(data);
+       io.in(data.room).emit('new message', {user: data.user, message:data.message});
+   })
 });
 
 var seerver = new WebSocketServer({
